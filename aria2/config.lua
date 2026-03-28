@@ -5,7 +5,16 @@ local cfg = {
   rpc_secret = os.getenv 'ARIA2_RPC_SECRET',
   page_size = 200,
   stopped_fetch_size = 400,
-  cache_ttl = 3,
+  auto_start = true,
+  auto_start_delay = 1,
+  download_dir = nil,
+  start_cmd = nil,
+  keymap = {
+    actions = '<enter>',
+    open_file = 'o',
+    pause = 'p',
+    resume = 'r',
+  },
 }
 
 local function trim(s)
@@ -19,11 +28,17 @@ local function normalize(next_cfg)
   out.rpc_secret = trim(out.rpc_secret)
   out.page_size = tonumber(out.page_size) or cfg.page_size
   out.stopped_fetch_size = tonumber(out.stopped_fetch_size) or cfg.stopped_fetch_size
-  out.cache_ttl = tonumber(out.cache_ttl) or cfg.cache_ttl
+  out.auto_start = out.auto_start ~= false
+  out.auto_start_delay = tonumber(out.auto_start_delay) or cfg.auto_start_delay
+  out.download_dir = trim(out.download_dir)
+  if type(out.start_cmd) ~= 'table' or #out.start_cmd == 0 then out.start_cmd = nil end
   return out
 end
 
-function M.setup(opt) cfg = normalize(lc.tbl_extend('force', cfg, opt or {})) end
+function M.setup(opt)
+  local global_keymap = lc.config.get().keymap
+  cfg = normalize(lc.tbl_deep_extend('force', cfg, { keymap = global_keymap }, opt or {}))
+end
 
 function M.get() return cfg end
 
