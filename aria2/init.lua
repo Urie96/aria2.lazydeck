@@ -424,8 +424,8 @@ function M.list(path, cb)
             key = 'error',
             kind = 'info',
             info_keymap = 'reload_add',
-            preview_message = 'aria2 request failed',
-            display = line { span(list_err, 'red') },
+            preview_message = tostring(list_err or 'aria2 request failed'),
+            display = line { span('aria2 request failed', 'red') },
           },
         })
         return

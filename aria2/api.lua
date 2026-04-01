@@ -79,6 +79,23 @@ local function build_start_cmd(cfg)
   return cmd
 end
 
+local function local_rpc_unavailable_hint(cfg)
+  if not cfg or not is_local_rpc_url(cfg.rpc_url) then return nil end
+
+  local cmd, err = build_start_cmd(cfg)
+  if not cmd then return err end
+
+  if not lc.system.executable(cmd[1]) then
+    return string.format(
+      'cannot connect to aria2 rpc at %s, and %s is not in PATH',
+      tostring(cfg.rpc_url),
+      tostring(cmd[1])
+    )
+  end
+
+  return nil
+end
+
 local function auto_start_message(pid)
   local msg = 'aria2 daemon started'
   if pid and pid > 0 then msg = msg .. ' (pid ' .. tostring(pid) .. ')' end
@@ -141,7 +158,8 @@ local function rpc(method, params, cb, opts)
   }, function(response)
     if not response.success then
       local response_err = response.error or ('HTTP ' .. tostring(response.status))
-      if not (opts and opts.skip_auto_start) and is_connection_error(response_err) and ensure_daemon_started(cfg) then
+      local connection_error = is_connection_error(response_err)
+      if not (opts and opts.skip_auto_start) and connection_error and ensure_daemon_started(cfg) then
         if lc.system.executable 'sleep' then
           lc.system.exec(
             { 'sleep', tostring(cfg.auto_start_delay or 1) },
@@ -152,6 +170,15 @@ local function rpc(method, params, cb, opts)
         cb(nil, 'aria2 daemon started in background, please retry')
         return
       end
+
+      if connection_error then
+        local hint = local_rpc_unavailable_hint(cfg)
+        if hint then
+          cb(nil, hint)
+          return
+        end
+      end
+
       cb(nil, response_err)
       return
     end
