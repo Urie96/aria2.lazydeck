@@ -290,7 +290,7 @@ refresh_incomplete_entries = function()
     end
 
     local next_entries = metas.attach_all(incomplete_entries(tasks))
-    if lc.deep_equal(path, current_path()) then lc.api.page_set_entries(next_entries) end
+    if lc.deep_equal(path, current_path()) then lc.api.set_entries(nil, next_entries) end
     maybe_poll_incomplete(tasks)
   end)
 end

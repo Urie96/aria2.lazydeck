@@ -77,7 +77,7 @@ function M.can_resume(task) return task and task.status == 'paused' end
 function M.can_remove(task) return task and task.gid and task.gid ~= '' and task.status ~= 'removed' end
 
 function M.hovered_task()
-  local hovered = lc.api.page_get_hovered()
+  local hovered = lc.api.get_hovered()
   if hovered and hovered.kind == 'task' then return hovered.task end
   return nil
 end
