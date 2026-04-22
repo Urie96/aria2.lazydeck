@@ -155,7 +155,7 @@ end
 function M.add_download_from_input()
   lc.input {
     prompt = 'Add download URL',
-    placeholder = 'https://example.com/file.iso or magnet:?...',
+    placeholder = 'https://example.com/file.iso or magnet:?... (支持多行)',
     on_submit = function(input)
       local uri = trim(input)
       if uri == '' then return end

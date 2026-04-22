@@ -267,12 +267,42 @@ function M.remove(gid, status, cb)
 end
 
 function M.add_uri(uri, cb)
-  local value = tostring(uri or ''):match '^%s*(.-)%s*$'
-  if value == '' then
+  local uris = {}
+  for line in uri:gmatch '[^\r\n]+' do
+    line = line:match '^%s*(.-)%s*$'
+    if line ~= '' then table.insert(uris, line) end
+  end
+
+  local count = #uris
+  if count == 0 then
     cb(nil, 'empty uri')
     return
   end
-  simple_call('addUri', { { value }, { dir = current_download_dir() } }, cb)
+
+  if count == 1 then
+    simple_call('addUri', { { uris[1] }, { dir = current_download_dir() } }, cb)
+    return
+  end
+
+  -- 多行：逐个添加任务
+  local gids = {}
+  local pending = count
+
+  local function on_one(gid, err)
+    if gid then table.insert(gids, gid) end
+    pending = pending - 1
+    if pending == 0 then
+      if #gids == count then
+        cb(table.concat(gids, ', '))
+      else
+        cb(nil, 'added ' .. tostring(#gids) .. '/' .. tostring(count) .. ' tasks')
+      end
+    end
+  end
+
+  for i = 1, count do
+    simple_call('addUri', { { uris[i] }, { dir = current_download_dir() } }, on_one)
+  end
 end
 
 return M
