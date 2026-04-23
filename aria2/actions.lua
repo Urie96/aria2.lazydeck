@@ -76,6 +76,8 @@ function M.can_resume(task) return task and task.status == 'paused' end
 
 function M.can_remove(task) return task and task.gid and task.gid ~= '' and task.status ~= 'removed' end
 
+function M.can_restart(task) return task and task.status == 'error' end
+
 function M.hovered_task()
   local hovered = lc.api.get_hovered()
   if hovered and hovered.kind == 'task' then return hovered.task end
@@ -170,6 +172,57 @@ function M.add_download_from_input()
   }
 end
 
+local function get_task_uris(task)
+  -- 尝试从 files 中获取 URIs
+  local files = task and task.files or {}
+  for _, file in ipairs(files) do
+    local uris = file.uris or {}
+    local result = {}
+    for _, uri_info in ipairs(uris) do
+      local uri_value = trim(uri_info.uri)
+      if uri_value ~= '' then
+        table.insert(result, uri_value)
+      end
+    end
+    if #result > 0 then return result end
+  end
+  -- 如果没有 URIs，尝试从 files[1].path 获取（对于本地种子文件等）
+  return nil
+end
+
+function M.restart_hovered_task()
+  local task = M.hovered_task()
+  if not task or not M.can_restart(task) then return false end
+
+  local uris = get_task_uris(task)
+  if not uris or #uris == 0 then
+    show_error 'cannot restart: no URIs found for this task'
+    return true
+  end
+
+  local task_nm = task_name(task)
+  lc.confirm {
+    title = 'Restart aria2 Task',
+    prompt = 'Restart download "' .. task_nm .. '"?',
+    on_confirm = function()
+      api.remove(task.gid, task.status, function(_, remove_err)
+        if remove_err then
+          show_error(remove_err)
+          return
+        end
+        api.add_uri(table.concat(uris, '\n'), function(gid, add_err)
+          if add_err then
+            show_error(add_err)
+            return
+          end
+          refresh_after_action('download restarted: ' .. task_nm)
+        end)
+      end)
+    end,
+  }
+  return true
+end
+
 function M.task_actions()
   local task = M.hovered_task()
   if not task then return false end
@@ -191,6 +244,12 @@ function M.task_actions()
     table.insert(options, {
       value = 'resume',
       display = line { span('Resume task', 'green') },
+    })
+  end
+  if M.can_restart(task) then
+    table.insert(options, {
+      value = 'restart',
+      display = line { span('Restart download', 'lightred') },
     })
   end
   if M.can_remove(task) then
@@ -219,6 +278,10 @@ function M.task_actions()
     end
     if choice == 'resume' then
       M.resume_hovered_task()
+      return
+    end
+    if choice == 'restart' then
+      M.restart_hovered_task()
       return
     end
     if choice == 'remove' then M.remove_hovered_task() end
