@@ -180,9 +180,7 @@ local function get_task_uris(task)
     local result = {}
     for _, uri_info in ipairs(uris) do
       local uri_value = trim(uri_info.uri)
-      if uri_value ~= '' then
-        table.insert(result, uri_value)
-      end
+      if uri_value ~= '' then table.insert(result, uri_value) end
     end
     if #result > 0 then return result end
   end
@@ -201,7 +199,7 @@ function M.restart_hovered_task()
   end
 
   local task_nm = task_name(task)
-  lc.confirm {
+  deck.confirm {
     title = 'Restart aria2 Task',
     prompt = 'Restart download "' .. task_nm .. '"?',
     on_confirm = function()
