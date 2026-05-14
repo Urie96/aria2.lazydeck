@@ -85,7 +85,7 @@ local function local_rpc_unavailable_hint(cfg)
   local cmd, err = build_start_cmd(cfg)
   if not cmd then return err end
 
-  if not lc.system.executable(cmd[1]) then
+  if not deck.system.executable(cmd[1]) then
     return string.format(
       'cannot connect to aria2 rpc at %s, and %s is not in PATH',
       tostring(cfg.rpc_url),
@@ -106,21 +106,21 @@ local function ensure_daemon_started(cfg)
   if not cfg.auto_start then return false, 'aria2 auto start disabled' end
   if not is_local_rpc_url(cfg.rpc_url) then return false, 'aria2 auto start only supports local rpc_url' end
 
-  local now = lc.time.now()
+  local now = deck.time.now()
   if state.last_start_at > 0 and (now - state.last_start_at) < 5 then
     return true, 'aria2 daemon start already requested'
   end
 
   local cmd, err = build_start_cmd(cfg)
   if not cmd then return false, err end
-  if not lc.system.executable(cmd[1]) then return false, 'command not found: ' .. tostring(cmd[1]) end
+  if not deck.system.executable(cmd[1]) then return false, 'command not found: ' .. tostring(cmd[1]) end
 
-  local ok, pid = pcall(lc.system.spawn, cmd)
+  local ok, pid = pcall(deck.system.spawn, cmd)
   if not ok then return false, pid end
 
   state.last_start_at = now
   state.start_pid = pid
-  lc.notify(auto_start_message(pid))
+  deck.notify(auto_start_message(pid))
   return true
 end
 
@@ -143,13 +143,13 @@ local function rpc(method, params, cb, opts)
   local request_params = clone_params(params)
   if cfg.rpc_secret and cfg.rpc_secret ~= '' then table.insert(request_params, 1, 'token:' .. cfg.rpc_secret) end
 
-  lc.http.request({
+  deck.http.request({
     method = 'POST',
     url = cfg.rpc_url,
     headers = {
       ['Content-Type'] = 'application/json',
     },
-    body = lc.json.encode {
+    body = deck.json.encode {
       jsonrpc = '2.0',
       id = tostring(state.next_id),
       method = 'aria2.' .. method,
@@ -160,8 +160,8 @@ local function rpc(method, params, cb, opts)
       local response_err = response.error or ('HTTP ' .. tostring(response.status))
       local connection_error = is_connection_error(response_err)
       if not (opts and opts.skip_auto_start) and connection_error and ensure_daemon_started(cfg) then
-        if lc.system.executable 'sleep' then
-          lc.system.exec(
+        if deck.system.executable 'sleep' then
+          deck.system.exec(
             { 'sleep', tostring(cfg.auto_start_delay or 1) },
             function() rpc(method, params, cb, { skip_auto_start = true }) end
           )
@@ -183,7 +183,7 @@ local function rpc(method, params, cb, opts)
       return
     end
 
-    local ok, decoded = pcall(lc.json.decode, response.body or '')
+    local ok, decoded = pcall(deck.json.decode, response.body or '')
     if not ok then
       cb(nil, 'failed to decode aria2 response')
       return

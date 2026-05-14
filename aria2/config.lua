@@ -23,7 +23,7 @@ local function trim(s)
 end
 
 local function normalize(next_cfg)
-  local out = lc.tbl_extend('force', {}, next_cfg or {})
+  local out = deck.tbl_extend('force', {}, next_cfg or {})
   out.rpc_url = trim(out.rpc_url)
   out.rpc_secret = trim(out.rpc_secret)
   out.page_size = tonumber(out.page_size) or cfg.page_size
@@ -36,8 +36,8 @@ local function normalize(next_cfg)
 end
 
 function M.setup(opt)
-  local global_keymap = lc.config.get().keymap
-  cfg = normalize(lc.tbl_deep_extend('force', cfg, { keymap = global_keymap }, opt or {}))
+  local global_keymap = deck.config.get().keymap
+  cfg = normalize(deck.tbl_deep_extend('force', cfg, { keymap = global_keymap }, opt or {}))
 end
 
 function M.get() return cfg end

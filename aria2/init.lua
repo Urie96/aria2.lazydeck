@@ -27,12 +27,12 @@ local SECTION_META = {
 }
 
 local function span(text, color)
-  local s = lc.style.span(tostring(text or ''))
+  local s = deck.style.span(tostring(text or ''))
   if color and color ~= '' then s = s:fg(color) end
   return s
 end
 
-local function line(parts) return lc.style.line(parts) end
+local function line(parts) return deck.style.line(parts) end
 local show_error
 local maybe_poll_incomplete
 local refresh_incomplete_entries
@@ -62,7 +62,7 @@ local function task_name(task)
 end
 
 local function current_path()
-  return lc.api.get_current_path() or {}
+  return deck.api.get_current_path() or {}
 end
 
 local function path_is_aria2_child(path)
@@ -77,7 +77,7 @@ end
 
 local function invalidate_current_page_cache(path)
   path = path or current_path()
-  if path_is_aria2_child(path) then lc.api.clear_page_cache(path) end
+  if path_is_aria2_child(path) then deck.api.clear_page_cache(path) end
 end
 
 local function task_status_text(status)
@@ -290,7 +290,7 @@ refresh_incomplete_entries = function()
     end
 
     local next_entries = metas.attach_all(incomplete_entries(tasks))
-    if lc.deep_equal(path, current_path()) then lc.api.set_entries(nil, next_entries) end
+    if deck.deep_equal(path, current_path()) then deck.api.set_entries(nil, next_entries) end
     maybe_poll_incomplete(tasks)
   end)
 end
@@ -299,7 +299,7 @@ local function schedule_incomplete_refresh()
   if state.poll_pending then return end
   state.poll_pending = true
   local generation = state.poll_generation
-  lc.defer_fn(function()
+  deck.defer_fn(function()
     state.poll_pending = false
     if generation ~= state.poll_generation then return end
     if not path_is_incomplete() then return end
@@ -335,7 +335,7 @@ local function register_enter_hook()
   if state.enter_hook_registered then return end
   state.enter_hook_registered = true
 
-  lc.hook.post_page_enter(function(ctx)
+  deck.hook.post_page_enter(function(ctx)
     local path = (ctx and ctx.path) or {}
     if path_is_aria2_child(path) then
       invalidate_current_page_cache(path)
@@ -382,7 +382,7 @@ local function list_section(section, cb)
 end
 
 show_error = function(err)
-  lc.notify(line {
+  deck.notify(line {
     span('aria2: ', 'red'),
     span(err or 'unknown error', 'red'),
   })

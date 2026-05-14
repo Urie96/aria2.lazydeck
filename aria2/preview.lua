@@ -14,13 +14,13 @@ local SECTION_META = {
 }
 
 local function span(text, color)
-  local s = lc.style.span(tostring(text or ''))
+  local s = deck.style.span(tostring(text or ''))
   if color and color ~= '' then s = s:fg(color) end
   return s
 end
 
-local function line(parts) return lc.style.line(parts) end
-local function text(lines) return lc.style.text(lines) end
+local function line(parts) return deck.style.line(parts) end
+local function text(lines) return deck.style.text(lines) end
 
 local function trim(s)
   if not s then return '' end
@@ -162,7 +162,7 @@ function M.task_preview(entry)
     table.insert(fields, field_line('Error message', task.errorMessage, 'blue', 'red'))
   end
 
-  lc.style.align_columns(fields)
+  deck.style.align_columns(fields)
 
   local lines = {
     line { span(task_name(task), 'white') },

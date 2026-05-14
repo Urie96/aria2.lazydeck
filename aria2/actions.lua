@@ -3,12 +3,12 @@ local M = {}
 local api = require 'aria2.api'
 
 local function span(text, color)
-  local s = lc.style.span(tostring(text or ''))
+  local s = deck.style.span(tostring(text or ''))
   if color and color ~= '' then s = s:fg(color) end
   return s
 end
 
-local function line(parts) return lc.style.line(parts) end
+local function line(parts) return deck.style.line(parts) end
 
 local function trim(s)
   if not s then return '' end
@@ -47,14 +47,14 @@ local function task_path(task)
 end
 
 local function show_error(err)
-  lc.notify(line {
+  deck.notify(line {
     span('aria2: ', 'red'),
     span(err or 'unknown error', 'red'),
   })
 end
 
 local function show_info(msg)
-  lc.notify(line {
+  deck.notify(line {
     span('aria2: ', 'cyan'),
     span(msg or '', 'white'),
   })
@@ -62,7 +62,7 @@ end
 
 local function refresh_after_action(msg)
   if msg and msg ~= '' then show_info(msg) end
-  lc.cmd 'reload'
+  deck.cmd 'reload'
 end
 
 function M.can_open(task)
@@ -79,7 +79,7 @@ function M.can_remove(task) return task and task.gid and task.gid ~= '' and task
 function M.can_restart(task) return task and task.status == 'error' end
 
 function M.hovered_task()
-  local hovered = lc.api.get_hovered()
+  local hovered = deck.api.get_hovered()
   if hovered and hovered.kind == 'task' then return hovered.task end
   return nil
 end
@@ -90,12 +90,12 @@ function M.open_task_file(task)
     show_error 'no file path for selected task'
     return false
   end
-  local stat = lc.fs.stat(path)
+  local stat = deck.fs.stat(path)
   if not stat.exists then
     show_error('file does not exist: ' .. path)
     return false
   end
-  lc.system.open(path)
+  deck.system.open(path)
   return true
 end
 
@@ -138,7 +138,7 @@ end
 function M.remove_hovered_task()
   local task = M.hovered_task()
   if not task or not M.can_remove(task) then return false end
-  lc.confirm {
+  deck.confirm {
     title = 'Remove aria2 Task',
     prompt = 'Remove task "' .. task_name(task) .. '"?',
     on_confirm = function()
@@ -155,7 +155,7 @@ function M.remove_hovered_task()
 end
 
 function M.add_download_from_input()
-  lc.input {
+  deck.input {
     prompt = 'Add download URL',
     placeholder = 'https://example.com/file.iso or magnet:?... (支持多行)',
     on_submit = function(input)
@@ -264,7 +264,7 @@ function M.task_actions()
     return true
   end
 
-  lc.select({
+  deck.select({
     prompt = 'Select aria2 action',
     options = options,
   }, function(choice)
